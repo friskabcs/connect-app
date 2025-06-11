@@ -1,25 +1,57 @@
-import { IconKey, IconLogout, IconUser, IconPlus } from "@tabler/icons-react";
+'use client';
+
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { IconKey, IconLogout, IconUser, IconNews } from '@tabler/icons-react';
+
 export default function AdminLayout({ children }) {
+  const pathname = usePathname();
+
+  const isActive = (path) => pathname === path;
+
   return (
-    <div id="container" className="flex w-screen h-screen bg-white font-sans text-black">
-      <aside className="w-[220px] bg-white border-r border-gray-600 py-4 p-8 gap-6 flex flex-col">
-        <h1 className="text-3xl font-bold text-center">Connect</h1>
-        <div className="flex flex-col gap-2 mt-4">
-          <button className="flex gap-2 items-center px-2 py-1 hover:bg-gray-100 rounded bg-black text-white">
-            <IconUser size={20} /> Users
-          </button>
-          <button className="flex gap-2 items-center px-2 py-1 hover:bg-gray-100 rounded text-black">
-            <IconKey size={20} /> Hak Akses
-          </button>
-          <button className="flex gap-2 items-center px-2 py-1 hover:bg-gray-100 rounded text-black">
-            <IconLogout size={20} /> Logout
-          </button>
-        </div>
+    <div className="flex w-screen h-screen">
+
+      <aside className="w-[220px] bg-white border-r border-gray-300 p-6 flex flex-col gap-4">
+        <h1 className="text-2xl font-bold text-center">Connect</h1>
+
+        <Link
+          href="/admin/users"
+          className={`flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 ${
+            isActive('/admin/users') ? 'bg-gray-300 font-bold' : ''
+          }`}
+        >
+          <IconUser size={20} /> Users
+        </Link>
+
+        <Link
+          href="/admin/roles"
+          className={`flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 ${
+            isActive('/admin/roles') ? 'bg-gray-300 font-bold' : ''
+          }`}
+        >
+          <IconKey size={20} /> Hak Akses
+        </Link>
+
+        <Link
+          href="/admin/berita"
+          className={`flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100 ${
+            isActive('/admin/berita') ? 'bg-gray-300 font-bold' : ''
+          }`}
+        >
+          <IconNews size={20} /> Berita
+        </Link>
+
+        <button
+          onClick={() => alert('Logout')}
+          className="flex items-center gap-2 px-3 py-2 rounded hover:bg-gray-100"
+        >
+          <IconLogout size={20} /> Logout
+        </button>
       </aside>
 
-      <section id="content" className="bg-white w-[100%] p-5">
-        {children}
-      </section>
+      {/* Konten */}
+      <main className="flex-1 p-6 bg-white">{children}</main>
     </div>
   );
 }

@@ -4,8 +4,7 @@ import UserCard from "@/components/ui/user-card";
 import { dataUser } from "@/mock/data-user";
 import { IconKey, IconLogout, IconUser, IconPlus } from "@tabler/icons-react";
 import useSWR from "swr";
-
-export default function Users_Page() {
+export default function NewsPage() {
   const data = dataUser;
   const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
@@ -13,7 +12,7 @@ export default function Users_Page() {
     data: users,
     error,
     isLoading,
-  } = useSWR(`https://jsonplaceholder.typicode.com/users`, fetcher);
+  } = useSWR(`https://jsonplaceholder.typicode.com/posts`, fetcher);
 
   if (isLoading) {
     return (
@@ -31,22 +30,21 @@ export default function Users_Page() {
     );
   }
   console.log(users);
-
   return (
     <section id="content">
       <input
         type="text"
-        placeholder="Cari Users"
+        placeholder="Cari Berita"
         className="w-full border px-4 py-2 rounded mb-6 placeholder-gray-600 text-black"
       />
       <div id="list-users" className="flex flex-col gap-4">
         {users.map((employee, index) => (
           <UserCard
             key={index}
-            fullname={employee.name}
-            email={employee.email}
-            role={employee.address.street}
-            status={employee.address.city}
+            fullname={employee.title}
+            email={employee.body}
+            role={employee.UserID}
+            status={employee.id}
           />
         ))}
       </div>
