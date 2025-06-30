@@ -1,56 +1,79 @@
-"use client";
+"use client"
 
-import UserCard from "@/components/ui/user-card";
-import { dataUser } from "@/mock/data-user";
-import { IconKey, IconLogout, IconUser, IconPlus } from "@tabler/icons-react";
-import useSWR from "swr";
+import { useEffect, useState } from "react"
+import { supabase } from "@/lib/supabase"
+import UserCard from "@/components/ui/user-card"
+import { IconPlus } from "@tabler/icons-react"
+
 export default function NewsPage() {
-  const data = dataUser;
-  const fetcher = (...args) => fetch(...args).then((res) => res.json());
+  const [news, setNews] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
+  const [search, setSearch] = useState("")
 
-  const {
-    data: users,
-    error,
-    isLoading,
-  } = useSWR(`https://jsonplaceholder.typicode.com/posts`, fetcher);
+  useEffect(() => {
+    const fetchNews = async () => {
+      const { data, error } = await supabase.from("berita").select("*")
+      if (error) {
+        setError(error)
+      } else {
+        setNews(data)
+      }
+      setLoading(false)
+    }
 
-  if (isLoading) {
+    fetchNews()
+  }, [])
+
+  const filteredNews = news.filter((item) =>
+    item.title?.toLowerCase().includes(search.toLowerCase()) ||
+    item.body?.toLowerCase().includes(search.toLowerCase()) ||
+    item.userId?.toString().includes(search.toLowerCase())
+  )
+
+  if (loading) {
     return (
       <div>
-        <p> Loading... </p>
+        <p>Loading...</p>
       </div>
-    );
+    )
   }
 
   if (error) {
     return (
       <div>
-        <p> Gagal memuat data </p>
+        <p>Gagal memuat data: {error.message}</p>
       </div>
-    );
+    )
   }
-  console.log(users);
+
   return (
     <section id="content">
       <input
         type="text"
         placeholder="Cari Berita"
+        value={search}
+        onChange={(e) => setSearch(e.target.value)}
         className="w-full border px-4 py-2 rounded mb-6 placeholder-gray-600 text-black"
       />
-      <div id="list-users" className="flex flex-col gap-4">
-        {users.map((employee, index) => (
+      <div id="list-news" className="flex flex-col gap-4">
+        {filteredNews.map((item, index) => (
           <UserCard
             key={index}
-            fullname={employee.title}
-            email={employee.body}
-            role={employee.UserID}
-            status={employee.id}
+            fullname={item.title}
+            email={item.body}
+            role={item.userId}
+            status={item.id}
           />
         ))}
       </div>
-      <button className="absolute bottom-6 right-6 bg-gray-200 hover:bg-gray-300 p-3 rounded shadow text-black">
+      <button
+        className="fixed bottom-6 right-6 bg-gray-200 p-3 rounded shadow text-black cursor-default"
+        title="Hanya ikon"
+        disabled
+      >
         <IconPlus size={20} />
       </button>
     </section>
-  );
+  )
 }

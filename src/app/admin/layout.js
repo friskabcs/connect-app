@@ -41,12 +41,12 @@ export default function AdminLayout({ children }) {
           <IconNews size={20} /> Berita
         </Link>
 
-        <button
-          onClick={() => alert("Logout")}
-          className="flex items-center gap-2 px-3 py-2 rounded hover:bg-black-100"
+        <Link
+          href="/login"
+          className={`flex items-center gap-2 px-3 py-2 rounded`}
         >
           <IconLogout size={20} /> Logout
-        </button>
+        </Link>
       </aside>
 
       <section id="content" className="bg-white w-[100%] p-5">
