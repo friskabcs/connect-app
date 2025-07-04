@@ -1,39 +1,67 @@
 'use client'
 
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
+import { supabase } from '@/lib/supabase'
 
 export default function LoginPage() {
   const router = useRouter()
+  const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [error, setError] = useState('')
 
-  const handleSubmit = (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault()
-    router.push('/admin/users')
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    })
+
+    if (error) {
+      setError(error.message)
+    } else {
+      router.push('/admin/dashboard')
+    }
   }
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-white">
+    <div className="min-h-screen flex items-center justify-center bg-white">
       <div className="w-full max-w-sm text-center">
-        <h1 className="text-5xl font-bold mb-10">Connect With Us</h1>
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <h2 className="text-4xl font-bold mb-6">Connect With Us</h2>
+        <form onSubmit={handleLogin} className="space-y-4 text-left">
           <input
             type="email"
             placeholder="Email"
-            className="border border-gray-300 rounded-md px-4 py-3"
-            disabled
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            required
+            className="border px-4 py-2 rounded w-full"
           />
           <input
             type="password"
             placeholder="Password"
-            className="border border-gray-300 rounded-md px-4 py-3"
-            disabled
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+            className="border px-4 py-2 rounded w-full"
           />
           <button
             type="submit"
-            className="bg-black text-white font-semibold py-3 rounded-md hover:bg-gray-800 transition"
+            className="bg-black text-white py-2 px-4 rounded w-full"
           >
             Sign In
           </button>
+          {error && <p className="text-red-600 text-sm">{error}</p>}
         </form>
+
+        <p className="mt-6 text-sm text-gray-600">
+          Don't Have an Account?{' '}
+          <Link href="/register" className="text-blue-600 hover:underline">
+            Sign Up 
+          </Link>
+        </p>
       </div>
     </div>
   )
