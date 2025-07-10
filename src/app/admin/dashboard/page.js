@@ -9,32 +9,34 @@ import {
 export default function Dashboard() {
   const [userCount, setUserCount] = useState(null)
   const [newsCount, setNewsCount] = useState(null)
-  const [eventCount, setEventCount] = useState(null)
-  const [darkMode, setDarkMode] = useState(false)
+  const [taskCount, setTaskCount] = useState(null)
+  const [taskProgress, setTaskProgress] = useState(0)
   const [userGrowthData, setUserGrowthData] = useState([])
-  const [avatarUrl, setAvatarUrl] = useState('')
 
   useEffect(() => {
     const fetchCounts = async () => {
       const { count: users } = await supabase.from("users").select("*", { count: "exact", head: true })
       const { count: news } = await supabase.from("berita").select("*", { count: "exact", head: true })
-      const { count: events } = await supabase.from("events").select("*", { count: "exact", head: true })
+      const { count: tasks } = await supabase.from("tasks").select("*", { count: "exact", head: true })
 
       setUserCount(users || 0)
       setNewsCount(news || 0)
-      setEventCount(events || 0)
+      setTaskCount(tasks || 0)
+    }
+
+    const fetchTaskProgress = async () => {
+      const { data, error } = await supabase.from("tasks").select("status")
+      if (error) return console.error("Fetch error:", error)
+
+      const total = data.length
+      const doneCount = data.filter(t => t.status === "done").length
+      const percent = total ? Math.round((doneCount / total) * 100) : 0
+      setTaskProgress(percent)
     }
 
     const fetchUserGrowth = async () => {
-      const { data, error } = await supabase
-        .from("users")
-        .select("created_at")
-        .order("created_at", { ascending: true })
-
-      if (error) {
-        console.error("Fetch error:", error)
-        return
-      }
+      const { data, error } = await supabase.from("users").select("created_at").order("created_at", { ascending: true })
+      if (error) return console.error("Fetch error:", error)
 
       const grouped = data.reduce((acc, curr) => {
         const month = new Date(curr.created_at).toLocaleString("default", { month: "short", year: "numeric" })
@@ -42,45 +44,53 @@ export default function Dashboard() {
         return acc
       }, {})
 
-      const chartData = Object.entries(grouped).map(([month, count]) => ({
-        month,
-        count
-      }))
-
+      const chartData = Object.entries(grouped).map(([month, count]) => ({ month, count }))
       setUserGrowthData(chartData)
     }
 
     fetchCounts()
+    fetchTaskProgress()
     fetchUserGrowth()
   }, [])
 
   return (
-    <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-gray-800"} w-full p-6 min-h-screen`}>
+    <div className="bg-white text-gray-800 w-full p-6 min-h-screen">
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold">Dashboard</h1>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow text-center">
+        <div className="bg-white border border-gray-200 p-6 rounded-xl shadow text-center">
           <h2 className="text-lg font-semibold mb-2">Total Users</h2>
-          <p className="text-3xl font-bold text-blue-600 dark:text-blue-400">{userCount}</p>
+          <p className="text-3xl font-bold text-pink-400">{userCount}</p>
           <Link href="/admin/users" className="text-sm text-blue-500 hover:underline mt-2 inline-block">Lihat semua</Link>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow text-center">
+        <div className="bg-white border border-gray-200 p-6 rounded-xl shadow text-center">
           <h2 className="text-lg font-semibold mb-2">Total News</h2>
-          <p className="text-3xl font-bold text-green-600 dark:text-green-400">{newsCount}</p>
+          <p className="text-3xl font-bold text-blue-400">{newsCount}</p>
           <Link href="/admin/berita" className="text-sm text-blue-500 hover:underline mt-2 inline-block">Lihat semua</Link>
         </div>
 
-        <div className="bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-6 rounded-xl shadow text-center">
-          <h2 className="text-lg font-semibold mb-2">Total Events</h2>
-          <p className="text-3xl font-bold text-purple-600 dark:text-purple-400">{eventCount}</p>
-          <Link href="/admin/events" className="text-sm text-blue-500 hover:underline mt-2 inline-block">Lihat semua</Link>
+        <div className="bg-white border border-gray-200 p-6 rounded-xl shadow text-center">
+          <h2 className="text-lg font-semibold mb-2">Total Tasks</h2>
+          <p className="text-3xl font-bold text-yellow-400">{taskCount}</p>
+          <Link href="/admin/tasks" className="text-sm text-blue-500 hover:underline mt-2 inline-block">Lihat semua</Link>
         </div>
       </div>
 
-      <div className="mt-10 bg-white dark:bg-gray-800 p-6 rounded-xl shadow border border-gray-200 dark:border-gray-700">
+      <div className="mt-10 bg-white border border-gray-200 p-6 rounded-xl shadow">
+        <h2 className="text-lg font-semibold mb-2">Task Completion Progress</h2>
+        <div className="text-sm text-gray-500 mb-2">{taskProgress}% selesai</div>
+        <div className="w-full h-5 bg-gray-200 rounded-full overflow-hidden">
+          <div
+            className="h-5 bg-green-500 rounded-full transition-all duration-500 ease-out"
+            style={{ width: `${taskProgress}%` }}
+          ></div>
+        </div>
+      </div>
+
+      <div className="mt-10 bg-white p-6 rounded-xl shadow border border-gray-200">
         <h2 className="text-lg font-semibold mb-4">User Growth</h2>
         <ResponsiveContainer width="100%" height={300}>
           <LineChart data={userGrowthData}>

@@ -15,6 +15,7 @@ export default function AccountSetting() {
   const [passwordBaru, setPasswordBaru] = useState("");
   const [konfirmasiPassword, setKonfirmasiPassword] = useState("");
   const [avatarUrl, setAvatarUrl] = useState(null);
+  const [tempAvatarUrl, setTempAvatarUrl] = useState(null);
 
   const [displayFirstName, setDisplayFirstName] = useState("");
   const [displayLastName, setDisplayLastName] = useState("");
@@ -26,6 +27,7 @@ export default function AccountSetting() {
     const fetchUser = async () => {
       const { data, error } = await supabase.auth.getUser();
       if (error || !data?.user) return router.push("/login");
+
       const user = data.user;
       setEmail(user.email);
 
@@ -44,15 +46,17 @@ export default function AccountSetting() {
         setDisplayFirstName(profile.first_name || "");
         setDisplayLastName(profile.last_name || "");
         setDisplayPhone(profile.phone || "");
-      }
 
-      const saved = localStorage.getItem("profile_saved");
-      if (saved === "true") {
-        setShowProfilePreview(true);
-        setAvatarUrl(localStorage.getItem("avatar_url") || "");
-        setDisplayFirstName(localStorage.getItem("first_name") || "");
-        setDisplayLastName(localStorage.getItem("last_name") || "");
-        setDisplayPhone(localStorage.getItem("phone") || "");
+        const saved = localStorage.getItem("profile_saved");
+        if (
+          saved === "true" ||
+          profile.first_name ||
+          profile.last_name ||
+          profile.phone ||
+          profile.avatar_url
+        ) {
+          setShowProfilePreview(true);
+        }
       }
     };
 
@@ -77,13 +81,19 @@ export default function AccountSetting() {
       if (error) return alert("Gagal ubah password: " + error.message);
     }
 
-    const { error: updateError } = await supabase.from("profiles").upsert({
+    const updateData = {
       id: userId,
       first_name: formFirstName,
       last_name: formLastName,
       phone: formPhone,
-    });
+    };
 
+    if (tempAvatarUrl) {
+      updateData.avatar_url = tempAvatarUrl;
+      setAvatarUrl(tempAvatarUrl);
+    }
+
+    const { error: updateError } = await supabase.from("profiles").upsert(updateData);
     if (updateError) return alert("Gagal simpan profil: " + updateError.message);
 
     setDisplayFirstName(formFirstName);
@@ -92,14 +102,12 @@ export default function AccountSetting() {
     setPasswordLama("");
     setPasswordBaru("");
     setKonfirmasiPassword("");
+    setTempAvatarUrl(null);
+
     setShowSuccess(true);
     setShowProfilePreview(true);
 
     localStorage.setItem("profile_saved", "true");
-    localStorage.setItem("first_name", formFirstName);
-    localStorage.setItem("last_name", formLastName);
-    localStorage.setItem("phone", formPhone);
-    localStorage.setItem("avatar_url", avatarUrl || "");
 
     setTimeout(() => setShowSuccess(false), 3000);
   };
@@ -121,11 +129,7 @@ export default function AccountSetting() {
 
     const publicUrl = supabase.storage.from("avatars").getPublicUrl(fileName).data.publicUrl;
 
-    await supabase.from("profiles").upsert({ id: userId, avatar_url: publicUrl });
-    setAvatarUrl(publicUrl);
-    setShowProfilePreview(true);
-    localStorage.setItem("profile_saved", "true");
-    localStorage.setItem("avatar_url", publicUrl);
+    setTempAvatarUrl(publicUrl); 
   };
 
   return (
@@ -171,6 +175,9 @@ export default function AccountSetting() {
               Pilih Gambar
               <input type="file" accept="image/*" onChange={handleUploadAvatar} className="hidden" />
             </label>
+            {tempAvatarUrl && (
+              <p className="text-sm text-green-600 mt-2">✔️ Gambar berhasil diupload. Klik "Simpan Semua" untuk menyimpan.</p>
+            )}
           </section>
 
           <button onClick={handleSave} className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded mt-4">
@@ -181,11 +188,11 @@ export default function AccountSetting() {
         {showProfilePreview && (
           <div className="bg-gray-100 p-6 rounded shadow-sm flex flex-col items-center text-center">
             <div className="w-24 h-24 rounded-full bg-blue-400 overflow-hidden flex items-center justify-center mb-4">
-              {avatarUrl ? (
+              {avatarUrl && avatarUrl !== "null" && avatarUrl !== "" ? (
                 <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
               ) : (
                 <span className="text-white text-4xl font-bold">
-                  {displayFirstName?.[0]?.toUpperCase() || "?"}
+                  {email?.[0]?.toUpperCase() || "?"}
                 </span>
               )}
             </div>
@@ -193,17 +200,19 @@ export default function AccountSetting() {
             <div className="space-y-6 w-full">
               <div>
                 <p className="text-gray-500 text-base font-semibold">Email</p>
-                <p className="font-semibold text-lg">{email}</p>
+                <p className="font-semibold text-lg">{email || "-"}</p>
               </div>
               <div>
                 <p className="text-gray-500 text-base font-semibold">Nama Lengkap</p>
                 <p className="font-semibold text-lg">
-                  {displayFirstName} {displayLastName}
+                  {(displayFirstName?.trim() || displayLastName?.trim())
+                    ? `${displayFirstName} ${displayLastName}`.trim()
+                    : "-"}
                 </p>
               </div>
               <div>
                 <p className="text-gray-500 text-base font-semibold">No. Handphone</p>
-                <p className="font-semibold text-lg">{displayPhone || "-"}</p>
+                <p className="font-semibold text-lg">{displayPhone?.trim() || "-"}</p>
               </div>
             </div>
           </div>

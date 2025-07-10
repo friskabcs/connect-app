@@ -1,49 +1,49 @@
-"use client"
-import { useEffect, useState } from "react"
-import { useRouter } from "next/navigation"
-import { supabase } from "@/lib/supabase"
-import UserCard from "@/components/ui/user-card"
-import { IconPlus } from "@tabler/icons-react"
+"use client";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { supabase } from "@/lib/supabase";
+import UserCard from "@/components/ui/user-card";
+import { IconPlus } from "@tabler/icons-react";
 
 export default function Users_Page() {
-  const [users, setUsers] = useState([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(null)
-  const [search, setSearch] = useState("")
-  const router = useRouter() 
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState("");
+  const router = useRouter();
 
   useEffect(() => {
     const fetchUsers = async () => {
-      const { data, error } = await supabase.from("users").select("*")
+      const { data, error } = await supabase.from("users").select("*");
       if (error) {
-        setError(error)
+        setError(error);
       } else {
-        setUsers(data)
+        setUsers(data);
       }
-      setLoading(false)
-    }
+      setLoading(false);
+    };
 
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
-  const filteredUsers = users.filter((user) =>
-    (user.name?.toLowerCase().includes(search.toLowerCase()) ||
-     user.email?.toLowerCase().includes(search.toLowerCase()) ||
-     user.role?.toLowerCase().includes(search.toLowerCase()) ||
-     user.status?.toLowerCase().includes(search.toLowerCase()))
-  )
+  const filteredUsers = users.filter(
+    (user) =>
+      user.name?.toLowerCase().includes(search.toLowerCase()) ||
+      user.email?.toLowerCase().includes(search.toLowerCase()) ||
+      user.role?.toLowerCase().includes(search.toLowerCase()) ||
+      user.status?.toLowerCase().includes(search.toLowerCase())
+  );
 
   const handleAddUser = () => {
-   router.push("/admin/users/create")
-
-  }
+    router.push("/admin/users/create");
+  };
 
   if (loading) {
     return (
       <div>
         <p> Loading... </p>
       </div>
-    )
+    );
   }
 
   if (error) {
@@ -51,7 +51,7 @@ export default function Users_Page() {
       <div>
         <p> Gagal memuat data: {error.message} </p>
       </div>
-    )
+    );
   }
 
   return (
@@ -63,6 +63,10 @@ export default function Users_Page() {
         onChange={(e) => setSearch(e.target.value)}
         className="w-full border px-4 py-2 rounded mb-6 placeholder-gray-600 text-black"
       />
+      {filteredUsers.length === 0 && (
+        <p className="text-gray-500">Tidak ada user ditemukan.</p>
+      )}
+
       <div id="list-users" className="flex flex-col gap-4">
         {filteredUsers.map((employee, index) => (
           <UserCard
@@ -81,5 +85,5 @@ export default function Users_Page() {
         <IconPlus size={20} />
       </button>
     </section>
-  )
+  );
 }

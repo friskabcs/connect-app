@@ -33,7 +33,6 @@ export default function RolesPage() {
     }
   };
 
-  // Sementara hanya alert
   const handleEdit = (id) => {
     alert(`Edit data dengan ID ${id}`);
   };
